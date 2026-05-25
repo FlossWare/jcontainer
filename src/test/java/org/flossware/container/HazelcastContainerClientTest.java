@@ -262,6 +262,129 @@ class HazelcastContainerClientTest {
         assertTrue(exception.getCause().getMessage().contains("hazelcastInstance cannot be null"));
     }
 
+    @Test
+    @DisplayName("Should build with default cluster name and no addresses")
+    void testBuilderWithDefaults() throws Exception {
+        try (org.mockito.MockedStatic<com.hazelcast.client.HazelcastClient> hazelcastClientStatic =
+                 org.mockito.Mockito.mockStatic(com.hazelcast.client.HazelcastClient.class)) {
+
+            com.hazelcast.client.config.ClientConfig[] capturedConfig = new com.hazelcast.client.config.ClientConfig[1];
+            hazelcastClientStatic.when(() ->
+                com.hazelcast.client.HazelcastClient.newHazelcastClient(
+                    org.mockito.ArgumentMatchers.any(com.hazelcast.client.config.ClientConfig.class)))
+                .thenAnswer(invocation -> {
+                    capturedConfig[0] = invocation.getArgument(0);
+                    return hazelcastInstance;
+                });
+
+            HazelcastContainerClient result = HazelcastContainerClient.builder().build();
+
+            assertNotNull(result);
+            assertEquals("dev", capturedConfig[0].getClusterName());
+        }
+    }
+
+    @Test
+    @DisplayName("Should build with custom cluster name")
+    void testBuilderWithCustomClusterName() throws Exception {
+        try (org.mockito.MockedStatic<com.hazelcast.client.HazelcastClient> hazelcastClientStatic =
+                 org.mockito.Mockito.mockStatic(com.hazelcast.client.HazelcastClient.class)) {
+
+            com.hazelcast.client.config.ClientConfig[] capturedConfig = new com.hazelcast.client.config.ClientConfig[1];
+            hazelcastClientStatic.when(() ->
+                com.hazelcast.client.HazelcastClient.newHazelcastClient(
+                    org.mockito.ArgumentMatchers.any(com.hazelcast.client.config.ClientConfig.class)))
+                .thenAnswer(invocation -> {
+                    capturedConfig[0] = invocation.getArgument(0);
+                    return hazelcastInstance;
+                });
+
+            HazelcastContainerClient result = HazelcastContainerClient.builder()
+                .clusterName("production")
+                .build();
+
+            assertNotNull(result);
+            assertEquals("production", capturedConfig[0].getClusterName());
+        }
+    }
+
+    @Test
+    @DisplayName("Should build with single address")
+    void testBuilderWithSingleAddress() throws Exception {
+        try (org.mockito.MockedStatic<com.hazelcast.client.HazelcastClient> hazelcastClientStatic =
+                 org.mockito.Mockito.mockStatic(com.hazelcast.client.HazelcastClient.class)) {
+
+            com.hazelcast.client.config.ClientConfig[] capturedConfig = new com.hazelcast.client.config.ClientConfig[1];
+            hazelcastClientStatic.when(() ->
+                com.hazelcast.client.HazelcastClient.newHazelcastClient(
+                    org.mockito.ArgumentMatchers.any(com.hazelcast.client.config.ClientConfig.class)))
+                .thenAnswer(invocation -> {
+                    capturedConfig[0] = invocation.getArgument(0);
+                    return hazelcastInstance;
+                });
+
+            HazelcastContainerClient result = HazelcastContainerClient.builder()
+                .addAddress("localhost:5701")
+                .build();
+
+            assertNotNull(result);
+            assertTrue(capturedConfig[0].getNetworkConfig().getAddresses().contains("localhost:5701"));
+        }
+    }
+
+    @Test
+    @DisplayName("Should build with multiple addresses via addAddress")
+    void testBuilderWithMultipleAddresses() throws Exception {
+        try (org.mockito.MockedStatic<com.hazelcast.client.HazelcastClient> hazelcastClientStatic =
+                 org.mockito.Mockito.mockStatic(com.hazelcast.client.HazelcastClient.class)) {
+
+            com.hazelcast.client.config.ClientConfig[] capturedConfig = new com.hazelcast.client.config.ClientConfig[1];
+            hazelcastClientStatic.when(() ->
+                com.hazelcast.client.HazelcastClient.newHazelcastClient(
+                    org.mockito.ArgumentMatchers.any(com.hazelcast.client.config.ClientConfig.class)))
+                .thenAnswer(invocation -> {
+                    capturedConfig[0] = invocation.getArgument(0);
+                    return hazelcastInstance;
+                });
+
+            HazelcastContainerClient result = HazelcastContainerClient.builder()
+                .addAddress("localhost:5701")
+                .addAddress("localhost:5702")
+                .build();
+
+            assertNotNull(result);
+            assertTrue(capturedConfig[0].getNetworkConfig().getAddresses().contains("localhost:5701"));
+            assertTrue(capturedConfig[0].getNetworkConfig().getAddresses().contains("localhost:5702"));
+        }
+    }
+
+    @Test
+    @DisplayName("Should build with addresses list")
+    void testBuilderWithAddressesList() throws Exception {
+        try (org.mockito.MockedStatic<com.hazelcast.client.HazelcastClient> hazelcastClientStatic =
+                 org.mockito.Mockito.mockStatic(com.hazelcast.client.HazelcastClient.class)) {
+
+            com.hazelcast.client.config.ClientConfig[] capturedConfig = new com.hazelcast.client.config.ClientConfig[1];
+            hazelcastClientStatic.when(() ->
+                com.hazelcast.client.HazelcastClient.newHazelcastClient(
+                    org.mockito.ArgumentMatchers.any(com.hazelcast.client.config.ClientConfig.class)))
+                .thenAnswer(invocation -> {
+                    capturedConfig[0] = invocation.getArgument(0);
+                    return hazelcastInstance;
+                });
+
+            java.util.List<String> addressList = java.util.Arrays.asList("host1:5701", "host2:5701", "host3:5701");
+            HazelcastContainerClient result = HazelcastContainerClient.builder()
+                .addresses(addressList)
+                .build();
+
+            assertNotNull(result);
+            assertTrue(capturedConfig[0].getNetworkConfig().getAddresses().contains("host1:5701"));
+            assertTrue(capturedConfig[0].getNetworkConfig().getAddresses().contains("host2:5701"));
+            assertTrue(capturedConfig[0].getNetworkConfig().getAddresses().contains("host3:5701"));
+        }
+    }
+
     private HazelcastContainerClient createTestClient() throws Exception {
         java.lang.reflect.Constructor<HazelcastContainerClient> constructor =
             HazelcastContainerClient.class.getDeclaredConstructor(HazelcastInstance.class);

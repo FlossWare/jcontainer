@@ -356,6 +356,58 @@ class KubernetesContainerClientTest {
         assertTrue(exception.getCause().getMessage().contains("namespace cannot be null"));
     }
 
+    @Test
+    @DisplayName("Should build with custom apiClient and namespace")
+    void testBuilderWithCustomApiClient() throws Exception {
+        try (org.mockito.MockedConstruction<io.kubernetes.client.openapi.apis.CoreV1Api> coreV1ApiConstruction =
+                 org.mockito.Mockito.mockConstruction(io.kubernetes.client.openapi.apis.CoreV1Api.class)) {
+
+            io.kubernetes.client.openapi.ApiClient customClient = mock(io.kubernetes.client.openapi.ApiClient.class);
+
+            KubernetesContainerClient result = KubernetesContainerClient.builder()
+                .apiClient(customClient)
+                .namespace("custom-namespace")
+                .build();
+
+            assertNotNull(result);
+            assertTrue(result.getDescription().contains("custom-namespace"));
+        }
+    }
+
+    @Test
+    @DisplayName("Should build with default apiClient and default namespace")
+    void testBuilderWithDefaults() throws Exception {
+        try (org.mockito.MockedStatic<io.kubernetes.client.util.Config> configStatic =
+                 org.mockito.Mockito.mockStatic(io.kubernetes.client.util.Config.class);
+             org.mockito.MockedConstruction<io.kubernetes.client.openapi.apis.CoreV1Api> coreV1ApiConstruction =
+                 org.mockito.Mockito.mockConstruction(io.kubernetes.client.openapi.apis.CoreV1Api.class)) {
+
+            io.kubernetes.client.openapi.ApiClient defaultClient = mock(io.kubernetes.client.openapi.ApiClient.class);
+            configStatic.when(io.kubernetes.client.util.Config::defaultClient).thenReturn(defaultClient);
+
+            KubernetesContainerClient result = KubernetesContainerClient.builder().build();
+
+            assertNotNull(result);
+            assertTrue(result.getDescription().contains("default"));
+        }
+    }
+
+    @Test
+    @DisplayName("Should throw IOException when default client creation fails")
+    void testBuilderDefaultClientFailure() throws Exception {
+        try (org.mockito.MockedStatic<io.kubernetes.client.util.Config> configStatic =
+                 org.mockito.Mockito.mockStatic(io.kubernetes.client.util.Config.class)) {
+
+            configStatic.when(io.kubernetes.client.util.Config::defaultClient)
+                .thenThrow(new java.io.IOException("Failed to load kubeconfig"));
+
+            IOException exception = assertThrows(IOException.class,
+                () -> KubernetesContainerClient.builder().build());
+
+            assertTrue(exception.getMessage().contains("Failed to create Kubernetes API client"));
+        }
+    }
+
     private KubernetesContainerClient createTestClient() throws Exception {
         java.lang.reflect.Constructor<KubernetesContainerClient> constructor =
             KubernetesContainerClient.class.getDeclaredConstructor(CoreV1Api.class, String.class);

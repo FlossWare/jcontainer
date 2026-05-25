@@ -197,6 +197,67 @@ class DockerContainerClientTest {
         assertTrue(exception.getCause().getMessage().contains("dockerClient cannot be null"));
     }
 
+    @Test
+    @DisplayName("Should build with default dockerHost")
+    void testBuilderWithDefaultDockerHost() throws Exception {
+        try (org.mockito.MockedStatic<com.github.dockerjava.core.DockerClientBuilder> builderStatic =
+                 org.mockito.Mockito.mockStatic(com.github.dockerjava.core.DockerClientBuilder.class);
+             org.mockito.MockedStatic<com.github.dockerjava.core.DefaultDockerClientConfig> configStatic =
+                 org.mockito.Mockito.mockStatic(com.github.dockerjava.core.DefaultDockerClientConfig.class)) {
+
+            com.github.dockerjava.core.DefaultDockerClientConfig.Builder configBuilder =
+                mock(com.github.dockerjava.core.DefaultDockerClientConfig.Builder.class);
+            com.github.dockerjava.core.DefaultDockerClientConfig config =
+                mock(com.github.dockerjava.core.DefaultDockerClientConfig.class);
+            com.github.dockerjava.core.DockerClientBuilder dockerBuilder =
+                mock(com.github.dockerjava.core.DockerClientBuilder.class);
+
+            configStatic.when(com.github.dockerjava.core.DefaultDockerClientConfig::createDefaultConfigBuilder)
+                .thenReturn(configBuilder);
+            when(configBuilder.build()).thenReturn(config);
+            builderStatic.when(() -> com.github.dockerjava.core.DockerClientBuilder.getInstance(config))
+                .thenReturn(dockerBuilder);
+            when(dockerBuilder.build()).thenReturn(dockerClient);
+
+            DockerContainerClient result = DockerContainerClient.builder().build();
+
+            assertNotNull(result);
+            verify(configBuilder, never()).withDockerHost(anyString());
+        }
+    }
+
+    @Test
+    @DisplayName("Should build with custom dockerHost")
+    void testBuilderWithCustomDockerHost() throws Exception {
+        try (org.mockito.MockedStatic<com.github.dockerjava.core.DockerClientBuilder> builderStatic =
+                 org.mockito.Mockito.mockStatic(com.github.dockerjava.core.DockerClientBuilder.class);
+             org.mockito.MockedStatic<com.github.dockerjava.core.DefaultDockerClientConfig> configStatic =
+                 org.mockito.Mockito.mockStatic(com.github.dockerjava.core.DefaultDockerClientConfig.class)) {
+
+            com.github.dockerjava.core.DefaultDockerClientConfig.Builder configBuilder =
+                mock(com.github.dockerjava.core.DefaultDockerClientConfig.Builder.class);
+            com.github.dockerjava.core.DefaultDockerClientConfig config =
+                mock(com.github.dockerjava.core.DefaultDockerClientConfig.class);
+            com.github.dockerjava.core.DockerClientBuilder dockerBuilder =
+                mock(com.github.dockerjava.core.DockerClientBuilder.class);
+
+            configStatic.when(com.github.dockerjava.core.DefaultDockerClientConfig::createDefaultConfigBuilder)
+                .thenReturn(configBuilder);
+            when(configBuilder.withDockerHost(anyString())).thenReturn(configBuilder);
+            when(configBuilder.build()).thenReturn(config);
+            builderStatic.when(() -> com.github.dockerjava.core.DockerClientBuilder.getInstance(config))
+                .thenReturn(dockerBuilder);
+            when(dockerBuilder.build()).thenReturn(dockerClient);
+
+            DockerContainerClient result = DockerContainerClient.builder()
+                .dockerHost("tcp://localhost:2375")
+                .build();
+
+            assertNotNull(result);
+            verify(configBuilder).withDockerHost("tcp://localhost:2375");
+        }
+    }
+
     private DockerContainerClient createTestClient() throws Exception {
         java.lang.reflect.Constructor<DockerContainerClient> constructor =
             DockerContainerClient.class.getDeclaredConstructor(DockerClient.class);
