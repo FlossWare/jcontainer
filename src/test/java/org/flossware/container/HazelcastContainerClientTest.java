@@ -174,7 +174,6 @@ class HazelcastContainerClientTest {
     }
 
     @Test
-    @org.junit.jupiter.api.Disabled("Mocking IMap for HashMap copy constructor is complex - tested via integration tests")
     @DisplayName("Should read all data successfully")
     void testReadAllSuccess() throws Exception {
         client = createTestClient();
@@ -182,16 +181,18 @@ class HazelcastContainerClientTest {
         byte[] value1 = "value1".getBytes();
         byte[] value2 = "value2".getBytes();
 
-        // Create a minimal mock that delegates to a HashMap for readAll to work
         HashMap<String, byte[]> backingMap = new HashMap<>();
         backingMap.put("key1", value1);
         backingMap.put("key2", value2);
 
         doReturn(map).when(hazelcastInstance).getMap(anyString());
-
-        // Make map.entrySet() return the backing map's entry set
-        // This allows new HashMap<>(map) to work properly
-        when(map.entrySet()).thenAnswer(inv -> backingMap.entrySet());
+        when(map.size()).thenReturn(backingMap.size());
+        when(map.isEmpty()).thenReturn(backingMap.isEmpty());
+        when(map.containsKey(anyString())).thenAnswer(inv -> backingMap.containsKey(inv.getArgument(0)));
+        when(map.get(anyString())).thenAnswer(inv -> backingMap.get(inv.getArgument(0)));
+        when(map.entrySet()).thenReturn(backingMap.entrySet());
+        when(map.keySet()).thenReturn(backingMap.keySet());
+        when(map.values()).thenReturn(backingMap.values());
 
         Map<String, byte[]> result = client.readAll("config-map");
 
