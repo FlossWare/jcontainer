@@ -19,7 +19,7 @@ Universal container and orchestration abstraction library for Java. Provides a s
 ```xml
 <dependency>
     <groupId>org.flossware</groupId>
-    <artifactId>jcontainer</artifactId>
+    <artifactId>container-java</artifactId>
     <version>1.0</version>
 </dependency>
 
@@ -240,8 +240,8 @@ This project uses **X.Y semantic versioning** (e.g., 1.0, 1.1, 2.0). Versions ar
 ## Building from Source
 
 ```bash
-git clone https://github.com/FlossWare/jcontainer.git
-cd jcontainer
+git clone https://github.com/FlossWare/container-java.git
+cd container-java
 mvn clean install
 ```
 
